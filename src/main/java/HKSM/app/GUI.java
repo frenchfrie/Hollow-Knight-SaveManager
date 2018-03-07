@@ -137,7 +137,7 @@ public class GUI {
 		JPanel directoryButtons = new JPanel();
 		c.weighty = 0;
 		c.gridy = 1;
-		JButton backupToggle = new JButton("Backup: ON " );
+		final JButton backupToggle = new JButton("Backup: ON " );
 		backupToggle.setMinimumSize(new Dimension(250,0));
 		if( backup == false)
 			backupToggle.setText("Backup: OFF");

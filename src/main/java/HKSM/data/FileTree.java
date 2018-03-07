@@ -39,7 +39,7 @@ public class FileTree extends JPanel {
     setLayout(new BorderLayout());
 
     // Make a tree list with all the nodes, and make it a JTree
-    JTree tree = new JTree(addNodes(null, dir));
+    final JTree tree = new JTree(addNodes(null, dir));
     model = (DefaultTreeModel) tree.getModel();
     // Add a listener
     

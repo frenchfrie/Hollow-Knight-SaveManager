@@ -53,3 +53,7 @@ bin
 .metadata
 savedata
 appProperties
+
+
+target/
+.idea/

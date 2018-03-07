@@ -15,21 +15,20 @@ import HKSM.app.editor.component.IntField;
 
 public class Listeners {
 	
-	public static class AutoCalcActivator implements ActionListener{
+	static class AutoCalcActivator implements ActionListener{
 		
 		JsonObject playerData;
 		Notches notches;
 		JCheckBox autoCalc;
 		JCheckBox overcharmed;
 		
-		public AutoCalcActivator(JsonObject playerData, Notches notches, JCheckBox autoCalc, JCheckBox overcharmed){
+		AutoCalcActivator(JsonObject playerData, Notches notches, JCheckBox autoCalc, JCheckBox overcharmed){
 			this.playerData = playerData;
 			this.notches = notches;
 			this.autoCalc = autoCalc;
 			this.overcharmed = overcharmed;
 		}
 		
-		@Override
 		/** Additional auto-calc logic is contained in CharmPanelListener */
 		public void actionPerformed(ActionEvent ae){
 			if(autoCalc.isSelected()){
@@ -67,7 +66,6 @@ public class Listeners {
 			this.memberName = memberName;
 		}
 		
-		@Override
 		public void actionPerformed(ActionEvent arg0) {
 			boolean bool = playerData.get(memberName).getAsBoolean();
 			playerData.addProperty(memberName, !bool);
@@ -75,21 +73,20 @@ public class Listeners {
 		}
 	}
 	
-	public static class BoolSpellListener implements ActionListener{
+	static class BoolSpellListener implements ActionListener{
 		
 		JCheckBox target;
 		JsonObject playerData;
 		String memberName;
 		int value;
 		
-		public BoolSpellListener(JCheckBox target, JsonObject playerData, String memberName, int value){
+		BoolSpellListener(JCheckBox target, JsonObject playerData, String memberName, int value){
 			this.target = target;
 			this.playerData = playerData;
 			this.memberName = memberName;
 			this.value = value;
 		}
 		
-		@Override
 		public void actionPerformed(ActionEvent arg0) {
 			
 			boolean b = target.isSelected();
@@ -119,7 +116,6 @@ public class Listeners {
 			this.value = value;
 		}
 		
-		@Override
 		public void actionPerformed(ActionEvent arg0) {
 			
 			boolean b = target.isSelected();
@@ -150,7 +146,6 @@ public class Listeners {
 			this.value = value;
 		}
 		
-		@Override
 		public void actionPerformed(ActionEvent arg0) {
 			playerData.addProperty("grimmChildLevel", value);
 
@@ -197,7 +192,6 @@ public class Listeners {
 			cost.getDocument().addDocumentListener(this);
 		}
 		
-		@Override
 		public void actionPerformed(ActionEvent ae){
 			JCheckBox source = (JCheckBox)ae.getSource();
 			String property = ae.getActionCommand();
@@ -221,7 +215,6 @@ public class Listeners {
 			}
 		}
 	
-		@Override
 		public void changedUpdate(DocumentEvent arg0) {
 			check();
 			if(autoCalc.isSelected()){
@@ -229,7 +222,6 @@ public class Listeners {
 			}
 		}
 	
-		@Override
 		public void insertUpdate(DocumentEvent arg0) {
 			check();
 			if(autoCalc.isSelected()){
@@ -237,7 +229,6 @@ public class Listeners {
 			}
 		}
 	
-		@Override
 		public void removeUpdate(DocumentEvent arg0) {
 			check();
 			if(autoCalc.isSelected()){
@@ -251,7 +242,6 @@ public class Listeners {
 		
 		private void setRunAutoCalc(){
 			this.runAutoCalc = new Runnable(){
-				@Override
 				public void run() {
 					if(autoCalc.isSelected()){
 						int tNotches = 0;
@@ -289,22 +279,19 @@ public class Listeners {
 			this.target = target;
 		}
 		
-		@Override
 		public void changedUpdate(DocumentEvent e) {
 			check();
 		}
 		
-		@Override
 		public void removeUpdate(DocumentEvent e) {
 			check();
 		}
 		
-		@Override
 		public void insertUpdate(DocumentEvent e) {
 			check();
 		}
 		
-		public void check(){
+		void check(){
 			playerData.addProperty(propertyName, target.getText());
 		}
 	}

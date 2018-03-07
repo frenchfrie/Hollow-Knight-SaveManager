@@ -53,7 +53,7 @@ public class SaveEditor extends JFrame {
 			e.printStackTrace();
 		}
 		
-		JsonObject playerData = json.getAsJsonObject(p);
+		final JsonObject playerData = json.getAsJsonObject(p);
 		
 		/* ******************** *
 		 * FRAME INITIALIZATION *
