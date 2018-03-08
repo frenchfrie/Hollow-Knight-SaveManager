@@ -3,7 +3,9 @@ package HKSM.data;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.file.Files;
+import java.security.InvalidKeyException;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
@@ -15,6 +17,7 @@ import gnu.crypto.mode.IMode;
 import gnu.crypto.mode.ModeFactory;
 import gnu.crypto.pad.IPad;
 import gnu.crypto.pad.PadFactory;
+import gnu.crypto.pad.WrongPaddingException;
 
 /**
  * 
@@ -111,50 +114,52 @@ public class SaveLoader {
 	private static final int BLOCK_SIZE = 16;
 	
 	
-	private static byte[] crypt(byte[] input, int encMode) throws Exception{
+	private static byte[] encrypt(byte[] input, int encMode) {
 		IMode mode = ModeFactory.getInstance(CIPHER_MODE, CIPHER_ALGO, BLOCK_SIZE);
-		
-		Map<String, Object> attributes = new HashMap<String, Object>();		
+
+		Map<String, Object> attributes = new HashMap<>();		
 	    attributes.put(IMode.KEY_MATERIAL, RIJNDAEL_KEY);
 	    attributes.put(IMode.CIPHER_BLOCK_SIZE, BLOCK_SIZE);
 	    attributes.put(IMode.STATE, encMode);
-	    
-	    mode.init(attributes);
-	    
-	    int bs = mode.currentBlockSize();
-	    
-	    IPad padding = PadFactory.getInstance(CIPHER_PAD);
-	    padding.init(bs);
-	    byte[] pad = padding.pad(input, 0, input.length);
-	    byte[] pt = new byte[input.length + pad.length];
-	    byte[] ct = new byte[pt.length];
 
-	    System.arraycopy(input, 0, pt, 0, input.length);
-	    System.arraycopy(pad, 0, pt, input.length, pad.length);
-	    
-	    for (int i = 0; ((i + bs < pt.length)&&encMode==IMode.DECRYPTION)||((i + bs <= pt.length)&&encMode==IMode.ENCRYPTION); i += bs)	    	 
-	    	mode.update(pt, i, ct, i);
-	     
-	     if( encMode == IMode.DECRYPTION){
-		     int unpad = padding.unpad(ct, 0, ct.length);
-		     byte[] output = new byte[ct.length - unpad];
-		     System.arraycopy(ct, 0, output, 0, ct.length);
-		     return output;
-	     }
-	     
-		return ct;
+		try {
+			mode.init(attributes);
+	
+			int bs = mode.currentBlockSize();
+			
+			IPad padding = PadFactory.getInstance(CIPHER_PAD);
+			padding.init(bs);
+			byte[] pad = padding.pad(input, 0, input.length);
+			byte[] pt = new byte[input.length + pad.length];
+			byte[] ct = new byte[pt.length];
+	
+			System.arraycopy(input, 0, pt, 0, input.length);
+			System.arraycopy(pad, 0, pt, input.length, pad.length);
+			
+			for (int i = 0; ((i + bs < pt.length)&&encMode==IMode.DECRYPTION)||((i + bs <= pt.length)&&encMode==IMode.ENCRYPTION); i += bs)	    	 
+				mode.update(pt, i, ct, i);
+			 
+			 if( encMode == IMode.DECRYPTION){
+				 int unpad = padding.unpad(ct, 0, ct.length);
+				 byte[] output = new byte[ct.length - unpad];
+				 System.arraycopy(ct, 0, output, 0, ct.length);
+				 return output;
+			 }
+			return ct;
+		} catch (InvalidKeyException | WrongPaddingException e) {
+			throw new RuntimeException("Could not encrypt data.");
+		}
 	}
-	
-	
+
 	/**
 	 * Encrypts a string via Rijndael/ECB/RKCS7 with the key UKu52ePUBwetZ9wNX88o54dnfKRu0T1l then encodes in base 64
 	 * This uses GNU libraries to bypass the JCE requirement
 	 * 
 	 * @param input the string representing the json, to be encrypted
 	 */
-	private static byte[] encrypt(String input) throws Exception {
+	private static byte[] encrypt(String input) {
 		byte[] message = input.getBytes();
-		byte[] ct = crypt(message, IMode.ENCRYPTION);
+		byte[] ct = encrypt(message, IMode.ENCRYPTION);
 		return Base64.getMimeEncoder().encode(ct);
 	}
 	/**
@@ -163,32 +168,28 @@ public class SaveLoader {
 	 * 
 	 * @param input the encrypted string representing the json, to be decrypted
 	 */
-	private static byte[] decrypt(String input) throws Exception {
+	private static byte[] decrypt(String input) {
 		byte[] message = input.getBytes();
 	    byte[] tmp = Arrays.copyOfRange(message, 0, message.length-1);
 	    String str = new String(tmp);
 	    message = Base64.getMimeDecoder().decode(str);
-	    byte[] output = crypt(message, IMode.DECRYPTION);
-	    return output;
+		return encrypt(message, IMode.DECRYPTION);
 	}
 	
 	public static String getHealthAndSoul(JsonObject je){
 		int health = 5 + je.getAsJsonObject("playerData").get("heartPieces").getAsInt();
 		int soul = je.getAsJsonObject("playerData").get("MPReserveMax").getAsInt() / 33;
-		String ret = health + " | " + soul;
-		return ret;
+		return health + " | " + soul;
 	}
 	
 	public static String getGeo(JsonObject je){
 		int geo = je.getAsJsonObject("playerData").get("geo").getAsInt();
-		String ret = "$" + geo;
-		return ret;
+		return "$" + geo;
 	}
 	
 	public static String getPerma(JsonObject je){
 		boolean perma = je.getAsJsonObject("playerData").get("permadeathMode").getAsBoolean();
-		String ret = perma ? "SteelSoul ON" : "SteelSoul OFF";
-		return ret;
+		return perma ? "SteelSoul ON" : "SteelSoul OFF";
 	}
 	
 	
@@ -196,14 +197,12 @@ public class SaveLoader {
 		int mapZone = je.getAsJsonObject("playerData").get("mapZone").getAsInt();
 		if( mapZone == MapZone.CITY.ordinal() )
 			return "CITY OF TEARS";
-		String ret = "unknown region";
-		return ret;
+		return "unknown region";
 	}
 	
 	public static String getCompletion(JsonObject je){
 		float cp = je.getAsJsonObject("playerData").get("completionPercentage").getAsFloat();
-		String ret = cp + "%";
-		return ret;
+		return cp + "%";
 	}
 	
 	/**
@@ -235,57 +234,51 @@ public class SaveLoader {
 	 * @param dir the location to encrypt and save the save (lol)
 	 * @param json the save data to be encrypted and written
 	 */
-	public static void saveSave(File dir, JsonObject json){
+	public static void saveSave(File dir, JsonObject json) throws IOException {
 		validateSaveData(json);
 		validateCharms(json);
 		Gson gson = new GsonBuilder().create();
 		String jsonString = gson.toJson(json);//.replaceAll("\\s","");
 		jsonString = jsonString.substring(0, jsonString.length()-2)+"}}";
 		System.out.println(jsonString);
-		try {
-			byte[] toSave = encrypt(jsonString);
-			int count = 0;
-			for( int i = 0; i< toSave.length; i++){
-				if(!(toSave[i] == 0x0D || toSave[i] == 0x0A))
-					count++;
-			}
-			byte[] fix = new byte[count];
-			count = 0;
-			for( int i = 0; i< toSave.length; i++){
-				if(!(toSave[i] == 0x0D || toSave[i] == 0x0A))
-					fix[count++] = toSave[i];
-			}
-			
-			toSave = fix;
-			
-			FileOutputStream out = new FileOutputStream(dir);
-			ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
-			outputStream.write(cSharpHeader);
-			outputStream.write(getLength(toSave));
-			outputStream.write(toSave);
-			outputStream.write(new byte[]{11});
-			
-			byte[] outArray = outputStream.toByteArray();
-			
-			out.write(outArray);
-			out.close();
-		} catch (Exception e) {
-			e.printStackTrace();
+		byte[] toSave = encrypt(jsonString);
+		int count = 0;
+		for( int i = 0; i< toSave.length; i++){
+			if(!(toSave[i] == 0x0D || toSave[i] == 0x0A))
+				count++;
+		}
+		byte[] fix = new byte[count];
+		count = 0;
+		for( int i = 0; i< toSave.length; i++){
+			if(!(toSave[i] == 0x0D || toSave[i] == 0x0A))
+				fix[count++] = toSave[i];
 		}
 		
+		toSave = fix;
+		
+		FileOutputStream out = new FileOutputStream(dir);
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+		outputStream.write(cSharpHeader);
+		outputStream.write(getLength(toSave));
+		outputStream.write(toSave);
+		outputStream.write(new byte[]{11});
+		
+		byte[] outArray = outputStream.toByteArray();
+		
+		out.write(outArray);
+		out.close();
 	}
-	
+
 	/**
 	 * 
 	 * @param dir the file to be decrypted into JSON format
 	 * @return the decrypted save data in JSON format
 	 * @throws Exception to capture generic errors
 	 */
-	public static JsonObject loadSave(File dir) throws Exception {
+	public static JsonObject loadSave(File dir) throws IOException {
 		String str = new String(Files.readAllBytes(dir.toPath()),"UTF-8");
 		String json = new String(decrypt(str)).trim();
-		JsonObject jElement = new Gson().fromJson(json, JsonObject.class);
-		return jElement;
+		return new Gson().fromJson(json, JsonObject.class);
 	}
 
 

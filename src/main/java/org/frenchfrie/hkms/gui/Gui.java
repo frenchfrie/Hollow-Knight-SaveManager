@@ -1,9 +1,20 @@
 package org.frenchfrie.hkms.gui;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+
+import org.apache.commons.lang3.SystemUtils;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.function.Consumer;
+
+import HKSM.data.SaveLoader;
 
 public class Gui extends JFrame {
 
@@ -13,16 +24,20 @@ public class Gui extends JFrame {
 
     private final JButton loadButton;
 
+    private File currentSave;
+
     public Gui() throws HeadlessException {
         setLayout(new BorderLayout());
         add(contentText, BorderLayout.CENTER);
         contentText.setPreferredSize(new Dimension(200, 120));
         buttonsPanel = new JPanel();
-        loadButton = new JButton("Load data");
-        loadButton.addActionListener(a -> {
-            contentText.setText("Salut le monde !");
-        });
+        loadButton = new JButton("Reload data");
+        loadButton.addActionListener(a -> loadData(currentSave));
         buttonsPanel.add(loadButton);
+
+        JButton saveButton = new JButton();
+        saveButton.addActionListener(a -> saveData(currentSave, contentText.getText()));
+        buttonsPanel.add(saveButton);
         add(buttonsPanel, BorderLayout.LINE_START);
 
         JMenuBar menubar = new JMenuBar();
@@ -31,13 +46,14 @@ public class Gui extends JFrame {
 
         JMenuItem loadFile = new JMenuItem("Load save file", KeyEvent.VK_L);
         loadFile.addActionListener(e -> {
-            String userName = System.getProperty("user.name");
-            File defaultSaveFolder = new File("C:\\Users\\" + userName + "\\AppData\\LocalLow\\Team Cherry\\Hollow Knight");
+            File defaultSaveFolder = new File(getSaveDirectoryLocation());
             JFileChooser chooser = new JFileChooser(defaultSaveFolder);
-            chooser.showOpenDialog(this);
+            int fileChooserResult = chooser.showOpenDialog(this);
+            if (fileChooserResult == JFileChooser.APPROVE_OPTION) {
+                loadData(chooser.getSelectedFile());
+            }
         });
         firstMenu.add(loadFile);
-
 
         JMenuItem exit = new JMenuItem("Exit", KeyEvent.VK_X);
         exit.addActionListener(e -> {
@@ -50,4 +66,34 @@ public class Gui extends JFrame {
         pack();
         setLocationRelativeTo(null);
     }
+
+    private String getSaveDirectoryLocation() {
+        if (SystemUtils.IS_OS_WINDOWS) {
+            return SystemUtils.USER_HOME + "\\AppData\\LocalLow\\Team Cherry\\Hollow Knight";
+        } else if (SystemUtils.IS_OS_LINUX) {
+            // Still not known by my humble self
+            return SystemUtils.USER_HOME;
+        } else {
+            // unknown default to user space
+            return SystemUtils.USER_HOME;
+        }
+    }
+
+    private void loadData(File fileToLoad) {
+        try {
+            contentText.setText(SaveLoader.loadSave(fileToLoad).toString());
+        } catch (IOException | JsonParseException e) {
+            JOptionPane.showMessageDialog(this, "Could not load file, an exception happened:\n" + e.toString() + "\n" + Arrays.toString(e.getStackTrace()), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void saveData(File fileToSave, String data) {
+        try {
+            SaveLoader.saveSave(fileToSave, new Gson().fromJson(data, JsonObject.class));
+        } catch (IOException | JsonParseException e) {
+            JOptionPane.showMessageDialog(this, "Could not save file, an exception happened:\n" + e.toString() + "\n" + Arrays.toString(e.getStackTrace()), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
+    
 }
