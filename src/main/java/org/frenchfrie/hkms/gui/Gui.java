@@ -1,6 +1,7 @@
 package org.frenchfrie.hkms.gui;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 
@@ -18,28 +19,20 @@ import HKSM.data.SaveLoader;
 
 public class Gui extends JFrame {
 
-    private final JTextPane contentText = new JTextPane();
-
-    private final JPanel buttonsPanel;
-
-    private final JButton loadButton;
-
-    private File currentSave;
+    private final JTabbedPane jTabbedPane;
 
     public Gui() throws HeadlessException {
         setLayout(new BorderLayout());
-        add(contentText, BorderLayout.CENTER);
-        contentText.setPreferredSize(new Dimension(200, 120));
-        buttonsPanel = new JPanel();
-        loadButton = new JButton("Reload data");
-        loadButton.addActionListener(a -> loadData(currentSave));
-        buttonsPanel.add(loadButton);
+        jTabbedPane = new JTabbedPane();
+        jTabbedPane.setPreferredSize(new Dimension(800, 600));
+        add(jTabbedPane);
 
-        JButton saveButton = new JButton();
-        saveButton.addActionListener(a -> saveData(currentSave, contentText.getText()));
-        buttonsPanel.add(saveButton);
-        add(buttonsPanel, BorderLayout.LINE_START);
+        createAndAddMenu();
+        pack();
+        setLocationRelativeTo(null);
+    }
 
+    private void createAndAddMenu() {
         JMenuBar menubar = new JMenuBar();
         JMenu firstMenu = new JMenu("File");
         firstMenu.setMnemonic(KeyEvent.VK_F);
@@ -50,7 +43,14 @@ public class Gui extends JFrame {
             JFileChooser chooser = new JFileChooser(defaultSaveFolder);
             int fileChooserResult = chooser.showOpenDialog(this);
             if (fileChooserResult == JFileChooser.APPROVE_OPTION) {
-                loadData(chooser.getSelectedFile());
+                File selectedFile = chooser.getSelectedFile();
+                try {
+                    SaveEditionPanel component = new SaveEditionPanel(selectedFile);
+                    jTabbedPane.addTab(null, component);
+                    jTabbedPane.setTabComponentAt(jTabbedPane.getTabCount() -1, tabComponent(selectedFile.getName(), jTabbedPane, component));
+                } catch (HKEditorException e1) {
+                    JOptionPane.showMessageDialog(this, "Could not load file, an exception happened:\n" + e.toString() + "\n" + Arrays.toString(e1.getStackTrace()), "Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
         });
         firstMenu.add(loadFile);
@@ -63,8 +63,16 @@ public class Gui extends JFrame {
         firstMenu.add(exit);
         menubar.add(firstMenu);
         setJMenuBar(menubar);
-        pack();
-        setLocationRelativeTo(null);
+    }
+
+    private JPanel tabComponent(String title, JTabbedPane tabPane, Component tabComponent) {
+        JPanel panel = new JPanel();
+        panel.add(new JLabel(title));
+        JButton closeButton = new JButton("x");
+        closeButton.setActionCommand("close tab");
+        closeButton.addActionListener(a -> {if (a.getActionCommand().equals("close tab")) {tabPane.remove(tabComponent);}});
+        panel.add(closeButton);
+        return panel;
     }
 
     private String getSaveDirectoryLocation() {
@@ -79,21 +87,4 @@ public class Gui extends JFrame {
         }
     }
 
-    private void loadData(File fileToLoad) {
-        try {
-            contentText.setText(SaveLoader.loadSave(fileToLoad).toString());
-        } catch (IOException | JsonParseException e) {
-            JOptionPane.showMessageDialog(this, "Could not load file, an exception happened:\n" + e.toString() + "\n" + Arrays.toString(e.getStackTrace()), "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void saveData(File fileToSave, String data) {
-        try {
-            SaveLoader.saveSave(fileToSave, new Gson().fromJson(data, JsonObject.class));
-        } catch (IOException | JsonParseException e) {
-            JOptionPane.showMessageDialog(this, "Could not save file, an exception happened:\n" + e.toString() + "\n" + Arrays.toString(e.getStackTrace()), "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-    
-    
 }

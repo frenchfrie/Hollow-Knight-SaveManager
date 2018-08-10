@@ -57,3 +57,5 @@ appProperties
 
 target/
 .idea/
+
+.git/

@@ -2,22 +2,13 @@ package HKSM.app.editor;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
+import java.io.IOException;
 import java.util.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
-import javax.swing.AbstractButton;
-import javax.swing.JCheckBox;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
-import javax.swing.ToolTipManager;
+import javax.swing.*;
 
 import com.google.gson.JsonObject;
 
@@ -72,7 +63,11 @@ public class SaveEditor extends JFrame {
 			
 		fileSave.addActionListener( new ActionListener(){
 			public void actionPerformed(ActionEvent e){
-				SaveLoader.saveSave(fObject, json);
+				try {
+					SaveLoader.saveSave(fObject, json);
+				} catch (IOException e1) {
+					JOptionPane.showConfirmDialog(SaveEditor.this, "Error during save:\n " + e1.getMessage(), "Error", JOptionPane.OK_OPTION, JOptionPane.ERROR_MESSAGE);
+				}
 			}
 		});
 		
