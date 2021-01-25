@@ -62,4 +62,72 @@
         </dependency>
     </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>application-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                            <archive>
+                                <index>true</index>
+                                <manifest>
+                                    <addClasspath>true</addClasspath>
+                                    <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                                    <mainClass>org.frenchfrie.hkms.Application</mainClass>
+                                </manifest>
+                                <manifestEntries>
+                                    <Application-Name>${project.name}</Application-Name>
+                                    <Permissions>all-permissions</Permissions>
+                                </manifestEntries>
+                            </archive>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.akathist.maven.plugins.launch4j</groupId>
+                <artifactId>launch4j-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>l4j-clui</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>launch4j</goal>
+                        </goals>
+                        <configuration>
+                            <dontWrapJar>false</dontWrapJar>
+                            <headerType>gui</headerType>
+                            <outfile>${project.build.directory}/Hollow-Knight-SaveManager-1.0.0-SNAPSHOT.exe</outfile>
+                            <jar>${project.build.directory}/Hollow-Knight-SaveManager-1.0.0-SNAPSHOT-jar-with-dependencies.jar</jar>
+                            <jre>
+                                <minVersion>1.6.0</minVersion>
+                            </jre>
+                            <versionInfo>
+                                <fileVersion>1.0.0.0</fileVersion>
+                                <txtFileVersion>${project.version}</txtFileVersion>
+                                <fileDescription>Description de l'application</fileDescription>
+                                <copyright>GNU GENERAL PUBLIC LICENSE v3</copyright>
+                                <productVersion>1.0.0.0</productVersion>
+                                <txtProductVersion>${project.version}</txtProductVersion>
+                                <companyName>Fenchfrie inc</companyName>
+                                <productName>Hollow-Knight-SaveManager</productName>
+                                <internalName>Hollow-Knight-SaveManager</internalName>
+                                <originalFilename>Hollow-Knight-SaveManager.exe</originalFilename>
+                            </versionInfo>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>
